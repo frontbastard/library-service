@@ -1,16 +1,15 @@
 version: '3.8'
 
 services:
-  book:
+  app:
     build:
       context: .
-      dockerfile: Dockerfile
     command:
       sh -c "python manage.py wait_for_db &&
              python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
     volumes:
-      - .:/app
+      - ./:/app
       - media_data:/files/media
     ports:
       - "8000:8000"
@@ -21,6 +20,8 @@ services:
 
   db:
     image: postgres:13
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:$PGDATA
     env_file:
