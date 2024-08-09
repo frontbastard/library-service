@@ -1,10 +1,15 @@
+from django.contrib.auth import get_user_model
 from rest_framework import generics
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.generics import CreateAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.settings import api_settings
 
-from user.serializers import UserSerializer, AuthTokenSerializer
+from user.serializers import (
+    UserSerializer,
+    AuthTokenSerializer,
+    UserDetailSerializer,
+)
 
 
 class CreateUserView(CreateAPIView):
@@ -23,3 +28,15 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class UserListView(generics.ListAPIView):
+    queryset = get_user_model().objects.all()
+    serializer_class = UserSerializer
+    permission_classes = (IsAdminUser,)
+
+
+class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = get_user_model().objects.all()
+    serializer_class = UserDetailSerializer
+    permission_classes = (IsAdminUser,)
