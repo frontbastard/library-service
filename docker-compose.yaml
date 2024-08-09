@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  book:
+  app:
     build:
       context: .
       dockerfile: Dockerfile
@@ -21,6 +21,8 @@ services:
 
   db:
     image: postgres:13
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:$PGDATA
     env_file:
