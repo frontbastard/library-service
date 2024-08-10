@@ -1,7 +1,8 @@
 from rest_framework import serializers
-from rest_framework.relations import SlugRelatedField
 
+from book.serializers import BookSerializer
 from borrowing.models import Borrowing
+from user.serializers import UserSerializer
 
 
 class BorrowingSerializer(serializers.ModelSerializer):
@@ -24,3 +25,7 @@ class BorrowingListSerializer(BorrowingSerializer):
         model = Borrowing
         exclude = ("book", "user")
 
+
+class BorrowingDetailSerializer(BorrowingSerializer):
+    book = BookSerializer(read_only=True)
+    user = UserSerializer(read_only=True)

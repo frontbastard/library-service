@@ -1,7 +1,11 @@
 from rest_framework import generics
 
 from borrowing.models import Borrowing
-from borrowing.serializers import BorrowingListSerializer, BorrowingSerializer
+from borrowing.serializers import (
+    BorrowingListSerializer,
+    BorrowingSerializer,
+    BorrowingDetailSerializer,
+)
 
 
 class BorrowingListView(generics.ListCreateAPIView):
@@ -25,3 +29,9 @@ class BorrowingListView(generics.ListCreateAPIView):
             return self.queryset.select_related("book", "user")
 
         return self.queryset
+
+
+class BorrowingDetailView(generics.RetrieveAPIView):
+    model = Borrowing
+    serializer_class = BorrowingDetailSerializer
+    queryset = Borrowing.objects.all()
