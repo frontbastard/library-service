@@ -3,9 +3,9 @@ from django.urls import path
 from borrowing.views import BorrowingListView, BorrowingDetailView
 
 urlpatterns = [
-    path("borrowings/", BorrowingListView.as_view(), name="borrowing_list"),
+    path("", BorrowingListView.as_view(), name="borrowing_list"),
     path(
-        "borrowings/<int:pk>/",
+        "<int:pk>/",
         BorrowingDetailView.as_view(),
         name="borrowing_detail",
     ),
