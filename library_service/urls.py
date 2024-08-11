@@ -21,12 +21,12 @@ from django.urls import path, include
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/book/", include("book.urls", namespace="book")),
+    path("api/books/", include("book.urls", namespace="book")),
     path(
-        "api/borrowing/",
+        "api/borrowings/",
         include("borrowing.urls", namespace="borrowing")
     ),
-    path("api/user/", include("user.urls", namespace="user")),
+    path("api/users/", include("user.urls", namespace="user")),
 ]
 
 if not settings.TESTING:
