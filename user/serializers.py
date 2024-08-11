@@ -32,8 +32,12 @@ class UserSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         instance = kwargs.get("instance")
 
-        if request and (not request.user.is_staff or request.user == instance):
-            self.fields.pop("is_active")
+        if not instance:
+            self.fields.pop("is_active", None)
+        elif request and (
+            not request.user.is_staff or request.user == instance
+        ):
+            self.fields.pop("is_active", None)
 
     def create(self, validated_data):
         """Create a new user with encrypted password and return it"""
