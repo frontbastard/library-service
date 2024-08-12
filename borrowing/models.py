@@ -41,8 +41,7 @@ class Borrowing(models.Model):
 
     def save(self, *args, **kwargs):
         self.full_clean()
-
-        return super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ("-borrow_date",)
