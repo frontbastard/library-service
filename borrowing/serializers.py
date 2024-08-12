@@ -14,22 +14,10 @@ class BorrowingSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = ("borrow_date",)
 
-    def create(self, validated_data):
-        with transaction.atomic():
-            books_data = validated_data.pop("books")
-            borrowing = Borrowing.objects.create(**validated_data)
-            borrowing.books.set(books_data)
-
-            for book in borrowing.books.all():
-                if book.inventory > 9:
-                    book.inventory -= 1
-                    book.save()
-                else:
-                    raise ValidationError(
-                        f"Book '{book.title}' is out of stock."
-                    )
-
-            return borrowing
+    def validate_books(self, books):
+        for book in books:
+            book.check_inventory()
+        return books
 
 
 class BorrowingListSerializer(BorrowingSerializer):
