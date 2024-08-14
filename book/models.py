@@ -1,4 +1,6 @@
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 
 class Book(models.Model):
@@ -14,6 +16,16 @@ class Book(models.Model):
     )
     inventory = models.IntegerField()
     daily_fee = models.DecimalField(max_digits=6, decimal_places=2)
+
+    def check_inventory(self):
+        if self.inventory < 1:
+            raise ValidationError(
+                _(f"The book '{self.title}' is out of stock.")
+            )
+
+    def update_inventory(self, amount):
+        self.inventory += amount
+        self.save()
 
     def __str__(self):
         return self.title
