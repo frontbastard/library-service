@@ -1,6 +1,4 @@
-from django.db import transaction
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 from rest_framework.relations import SlugRelatedField
 
 from book.serializers import BookSerializer
@@ -12,24 +10,20 @@ class BorrowingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Borrowing
         fields = "__all__"
-        read_only_fields = ("borrow_date",)
+        read_only_fields = ("borrow_date", "actual_return_date")
 
-    def create(self, validated_data):
-        with transaction.atomic():
-            books_data = validated_data.pop("books")
-            borrowing = Borrowing.objects.create(**validated_data)
-            borrowing.books.set(books_data)
+    def validate(self, attrs):
+        Borrowing.validate_expected_return_date(
+            expected_return_date=attrs.get("expected_return_date", None),
+            error_to_raise=serializers.ValidationError
+        )
+        return attrs
 
-            for book in borrowing.books.all():
-                if book.inventory > 9:
-                    book.inventory -= 1
-                    book.save()
-                else:
-                    raise ValidationError(
-                        f"Book '{book.title}' is out of stock."
-                    )
-
-            return borrowing
+    def validate_books(self, books):
+        if self.instance is None:
+            for book in books:
+                book.check_inventory()
+        return books
 
 
 class BorrowingListSerializer(BorrowingSerializer):
@@ -49,5 +43,37 @@ class BorrowingListSerializer(BorrowingSerializer):
 
 
 class BorrowingDetailSerializer(BorrowingSerializer):
-    book = BookSerializer(read_only=True)
+    books = BookSerializer(read_only=True, many=True)
     user = UserSerializer(read_only=True)
+
+
+class BorrowingReturnSerializer(BorrowingDetailSerializer):
+    user_email = serializers.CharField(read_only=True, source="user.email")
+    books = serializers.SerializerMethodField()
+    actual_return_date = serializers.DateField(required=True)
+
+    class Meta:
+        model = Borrowing
+        fields = (
+            "borrow_date",
+            "expected_return_date",
+            "actual_return_date",
+            "user_email",
+            "books",
+        )
+        read_only_fields = ("books", "borrow_date", "expected_return_date")
+
+    def get_books(self, obj):
+        return [book.title for book in obj.books.all()]
+
+    def validate(self, attrs):
+        Borrowing.validate_actual_return_date(
+            actual_return_date=attrs.get("actual_return_date", None),
+            borrow_date=self.instance.borrow_date,
+            error_to_raise=serializers.ValidationError,
+        )
+        Borrowing.validate_books_returned(
+            actual_return_date=self.instance.actual_return_date,
+            error_to_raise=serializers.ValidationError,
+        )
+        return attrs
