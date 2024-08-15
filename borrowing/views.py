@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -63,9 +64,21 @@ class BorrowingViewSet(viewsets.ModelViewSet):
             partial=True,
         )
         serializer.is_valid(raise_exception=True)
-        borrowing.actual_return_date = request.data.get(
-            "actual_return_date", None
-        )
-        serializer.save()
+
+        with transaction.atomic():
+            borrowing.actual_return_date = request.data.get(
+                "actual_return_date", None
+            )
+            serializer.save()
+
+            try:
+                for book in borrowing.books.all():
+                    book.update_inventory(1)
+
+                borrowing.actual_return_date = None
+            except Exception as e:
+                return Response(
+                    {"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST
+                )
 
         return Response(serializer.data, status=status.HTTP_200_OK)
