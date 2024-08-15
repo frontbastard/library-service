@@ -6,10 +6,10 @@ services:
       context: .
     command:
       sh -c "python manage.py wait_for_db &&
-             python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000"
+      python manage.py migrate &&
+      python manage.py runserver 0.0.0.0:8000"
     volumes:
-      - ./:/app
+      - .:/app
       - media_data:/files/media
     ports:
       - "8000:8000"
@@ -26,6 +26,43 @@ services:
       - postgres_data:$PGDATA
     env_file:
       - .env
+
+  redis:
+    image: redis:alpine
+    ports:
+      - 6379:6379
+
+  celery:
+    build: .
+    user: app_user
+    command: [
+      "celery",
+      "-A",
+      "library_service",
+      "worker",
+      "--loglevel=info"
+    ]
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+
+  celerybeat:
+    build: .
+    user: app_user
+    command: [
+      "celery",
+      "-A",
+      "library_service",
+      "beat",
+      "--loglevel=info",
+      "--scheduler",
+      "django_celery_beat.schedulers:DatabaseScheduler",
+    ]
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
 
 volumes:
   postgres_data:
