@@ -1,4 +1,4 @@
-.idea
+.idea/
 .vscode/
 *.iml
 .env
@@ -8,4 +8,5 @@
 .pytest_cache/
 **__pycache__/
 **db.sqlite3
-media
+media/
+staticfiles/
