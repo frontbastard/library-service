@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "user.apps.UserConfig",
     "book.apps.BookConfig",
     "borrowing.apps.BorrowingConfig",
+    "notification.apps.NotificationConfig",
 ]
 
 MIDDLEWARE = [
