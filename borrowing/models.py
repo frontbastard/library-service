@@ -3,6 +3,13 @@ import datetime
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import (
+    Sum, Case, When, ExpressionWrapper, F,
+    DecimalField, IntegerField,
+)
+from django.db.models.functions import (
+    Least, Greatest, Coalesce, Cast, ExtractDay,
+)
 from django.utils.translation import gettext_lazy as _
 
 from book.models import Book
@@ -18,6 +25,36 @@ class Borrowing(models.Model):
         on_delete=models.CASCADE,
         related_name="borrowings",
     )
+
+    @property
+    def total_sum(self):
+        return Borrowing.objects.filter(pk=self.pk).annotate(
+            borrowing_days=Case(
+                When(
+                    actual_return_date__isnull=False,
+                    then=ExtractDay(
+                        Least(
+                            F("actual_return_date") - F("borrow_date"),
+                            F("expected_return_date") - F("borrow_date")
+                        )
+                    )
+                ),
+                default=0,
+                output_field=IntegerField()
+            ),
+            overdue_days=Greatest(
+                ExtractDay(
+                    F("actual_return_date") - F("expected_return_date")
+                ),
+                0
+            ),
+            total_book_fee=Coalesce(Sum("books__daily_fee"), 0),
+            total=ExpressionWrapper(
+                (F("borrowing_days") + F("overdue_days") * 1.2)
+                * F("total_book_fee"),
+                output_field=DecimalField()
+            )
+        ).values("total").first()["total"]
 
     @staticmethod
     def validate_books_returned(actual_return_date, error_to_raise):
@@ -41,8 +78,10 @@ class Borrowing(models.Model):
                  or actual_return_date > datetime.date.today())
         ):
             raise error_to_raise(
-                _("The actual return date should be "
-                  "between the borrow date and today.")
+                _(
+                    "The actual return date should be "
+                    "between the borrow date and today."
+                )
             )
 
     @staticmethod
@@ -52,11 +91,13 @@ class Borrowing(models.Model):
     ):
         if (
             expected_return_date is not None
-            and expected_return_date <= datetime.date.today()
+            and expected_return_date < datetime.date.today()
         ):
             raise error_to_raise(
-                _("The expected return date should "
-                  "be longer than the borrow date.")
+                _(
+                    "The expected return date should "
+                    "be longer than today."
+                )
             )
 
     def __str__(self):
@@ -64,10 +105,12 @@ class Borrowing(models.Model):
                 f"{self.user.email} on {self.borrow_date}")
 
     def clean(self):
-        Borrowing.validate_expected_return_date(
-            expected_return_date=self.expected_return_date,
-            error_to_raise=ValidationError,
-        )
+        if not self.pk:
+            Borrowing.validate_expected_return_date(
+                expected_return_date=self.expected_return_date,
+                error_to_raise=ValidationError,
+            )
+
         Borrowing.validate_actual_return_date(
             actual_return_date=self.actual_return_date,
             borrow_date=self.borrow_date,

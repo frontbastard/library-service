@@ -9,6 +9,7 @@ from borrowing.serializers import (
     BorrowingSerializer,
     BorrowingDetailSerializer,
     BorrowingReturnSerializer,
+    BorrowingCreateSerializer,
 )
 
 
@@ -17,7 +18,7 @@ class BorrowingViewSet(viewsets.ModelViewSet):
 
     SERIALIZER_MAP = {
         "list": BorrowingListSerializer,
-        "create": BorrowingSerializer,
+        "create": BorrowingCreateSerializer,
         "retrieve": BorrowingDetailSerializer,
         "update": BorrowingSerializer,
         "partial_update": BorrowingSerializer,
@@ -74,8 +75,6 @@ class BorrowingViewSet(viewsets.ModelViewSet):
             try:
                 for book in borrowing.books.all():
                     book.update_inventory(1)
-
-                borrowing.actual_return_date = None
             except Exception as e:
                 return Response(
                     {"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST
