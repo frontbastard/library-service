@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from borrowing.models import Borrowing
@@ -7,6 +8,7 @@ from borrowing.models import Borrowing
 @admin.register(Borrowing)
 class BorrowingAdmin(admin.ModelAdmin):
     list_display = (
+        "id",
         "user",
         "borrow_date",
         "expected_return_date",
@@ -20,7 +22,7 @@ class BorrowingAdmin(admin.ModelAdmin):
 
     def return_borrowing_action(self, request, queryset):
         for borrowing in queryset:
-            borrowing.actual_return_date = None
+            borrowing.actual_return_date = timezone.now().date()
             borrowing.save()
 
             for book in borrowing.books.all():

@@ -7,23 +7,30 @@ from user.serializers import UserSerializer
 
 
 class BorrowingSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Borrowing
-        fields = "__all__"
-        read_only_fields = ("borrow_date", "actual_return_date")
+    total_sum = serializers.SerializerMethodField()
 
-    def validate(self, attrs):
-        Borrowing.validate_expected_return_date(
-            expected_return_date=attrs.get("expected_return_date", None),
-            error_to_raise=serializers.ValidationError
-        )
-        return attrs
+    def get_total_sum(self, obj):
+        return obj.total_sum
 
     def validate_books(self, books):
         if self.instance is None:
             for book in books:
                 book.check_inventory()
         return books
+
+    class Meta:
+        model = Borrowing
+        fields = "__all__"
+        read_only_fields = ("borrow_date", "actual_return_date", "total_sum")
+
+
+class BorrowingCreateSerializer(BorrowingSerializer):
+    def validate(self, attrs):
+        Borrowing.validate_expected_return_date(
+            expected_return_date=attrs.get("expected_return_date", None),
+            error_to_raise=serializers.ValidationError
+        )
+        return attrs
 
 
 class BorrowingListSerializer(BorrowingSerializer):
@@ -52,17 +59,6 @@ class BorrowingReturnSerializer(BorrowingDetailSerializer):
     books = serializers.SerializerMethodField()
     actual_return_date = serializers.DateField(required=True)
 
-    class Meta:
-        model = Borrowing
-        fields = (
-            "borrow_date",
-            "expected_return_date",
-            "actual_return_date",
-            "user_email",
-            "books",
-        )
-        read_only_fields = ("books", "borrow_date", "expected_return_date")
-
     def get_books(self, obj):
         return [book.title for book in obj.books.all()]
 
@@ -77,3 +73,15 @@ class BorrowingReturnSerializer(BorrowingDetailSerializer):
             error_to_raise=serializers.ValidationError,
         )
         return attrs
+
+    class Meta:
+        model = Borrowing
+        fields = (
+            "borrow_date",
+            "expected_return_date",
+            "actual_return_date",
+            "user_email",
+            "books",
+            "total_sum",
+        )
+        read_only_fields = ("books", "borrow_date", "expected_return_date")
