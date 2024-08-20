@@ -11,6 +11,7 @@ from borrowing.serializers import (
     BorrowingReturnSerializer,
     BorrowingCreateSerializer,
 )
+from payment.services import PaymentService
 
 
 class BorrowingViewSet(viewsets.ModelViewSet):
@@ -50,6 +51,18 @@ class BorrowingViewSet(viewsets.ModelViewSet):
                         .prefetch_related("books"))
 
         return queryset
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        borrowing = serializer.save()
+
+        payment = PaymentService.create_checkout_session(request, borrowing)
+
+        return Response(
+            {"checkout_url": payment.session_url},
+            status=status.HTTP_303_SEE_OTHER
+        )
 
     @action(
         detail=True,

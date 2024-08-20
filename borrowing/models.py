@@ -4,11 +4,11 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import (
-    Sum, Case, When, ExpressionWrapper, F,
-    DecimalField, IntegerField,
+    Sum, ExpressionWrapper, F,
+    DecimalField,
 )
 from django.db.models.functions import (
-    Least, Greatest, Coalesce, Cast, ExtractDay,
+    Greatest, Coalesce, ExtractDay,
 )
 from django.utils.translation import gettext_lazy as _
 
@@ -27,21 +27,24 @@ class Borrowing(models.Model):
     )
 
     @property
-    def total_sum(self):
+    def regular_sum(self):
         return Borrowing.objects.filter(pk=self.pk).annotate(
-            borrowing_days=Case(
-                When(
-                    actual_return_date__isnull=False,
-                    then=ExtractDay(
-                        Least(
-                            F("actual_return_date") - F("borrow_date"),
-                            F("expected_return_date") - F("borrow_date")
-                        )
-                    )
-                ),
-                default=0,
-                output_field=IntegerField()
+            borrowing_days=ExtractDay(
+                F("expected_return_date") - F("borrow_date")
             ),
+            total_book_fee=Coalesce(Sum("books__daily_fee"), 0),
+            total=ExpressionWrapper(
+                F("borrowing_days") * F("total_book_fee"),
+                output_field=DecimalField()
+            )
+        ).values("total").first()["total"]
+
+    @property
+    def fine_sum(self):
+        if not self.actual_return_date:
+            return 0
+
+        return Borrowing.objects.filter(pk=self.pk).annotate(
             overdue_days=Greatest(
                 ExtractDay(
                     F("actual_return_date") - F("expected_return_date")
@@ -49,12 +52,11 @@ class Borrowing(models.Model):
                 0
             ),
             total_book_fee=Coalesce(Sum("books__daily_fee"), 0),
-            total=ExpressionWrapper(
-                (F("borrowing_days") + F("overdue_days") * 1.2)
-                * F("total_book_fee"),
+            fine=ExpressionWrapper(
+                F("overdue_days") * F("total_book_fee") * 0.2,
                 output_field=DecimalField()
             )
-        ).values("total").first()["total"]
+        ).values("fine").first()["fine"]
 
     @staticmethod
     def validate_books_returned(actual_return_date, error_to_raise):

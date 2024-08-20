@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "rest_framework",
     "django_celery_beat",
+    "payment",
     "user.apps.UserConfig",
     "book.apps.BookConfig",
     "borrowing.apps.BorrowingConfig",
@@ -117,12 +118,12 @@ WSGI_APPLICATION = "library_service.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": config("SQL_ENGINE"),
-        "NAME": config("SQL_DB"),
-        "USER": config("SQL_USER"),
-        "PASSWORD": config("SQL_PASSWORD"),
-        "HOST": config("SQL_HOST"),
-        "PORT": config("SQL_PORT"),
+        "ENGINE": config("POSTGRES_ENGINE"),
+        "NAME": config("POSTGRES_DB"),
+        "USER": config("POSTGRES_USER"),
+        "PASSWORD": config("POSTGRES_PASSWORD"),
+        "HOST": config("POSTGRES_HOST"),
+        "PORT": config("POSTGRES_PORT"),
     }
 }
 

@@ -50,19 +50,26 @@ services:
   celerybeat:
     build: .
     user: app_user
-    command: [
-      "celery",
-      "-A",
-      "library_service",
-      "beat",
-      "--loglevel=info",
-      "--scheduler",
-      "django_celery_beat.schedulers:DatabaseScheduler",
-    ]
+    command: sh -c "python manage.py wait_for_db &&
+      celery -A library_service beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler"
     volumes:
       - .:/app
     depends_on:
       - redis
+
+  stripe:
+    image: stripe/stripe-cli
+    command: [
+      "listen",
+      "--forward-to",
+      "http://app:8000/stripe/webhook/",
+      "--api-key",
+      "${STRIPE_SECRET_KEY}"
+    ]
+    env_file:
+      - .env
+    depends_on:
+      - app
 
 volumes:
   postgres_data:
