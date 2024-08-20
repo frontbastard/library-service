@@ -27,6 +27,7 @@ urlpatterns = [
         "api/borrowings/",
         include("borrowing.urls", namespace="borrowing")
     ),
+    path("api/payments/", include("payment.urls", namespace="payment")),
 ]
 
 if not settings.TESTING:
