@@ -1,6 +1,7 @@
 from django.db import transaction
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from borrowing.models import Borrowing
@@ -16,6 +17,7 @@ from payment.services import PaymentService
 
 class BorrowingViewSet(viewsets.ModelViewSet):
     queryset = Borrowing.objects.all()
+    permission_classes = [IsAuthenticated]
 
     SERIALIZER_MAP = {
         "list": BorrowingListSerializer,
@@ -34,8 +36,11 @@ class BorrowingViewSet(viewsets.ModelViewSet):
         is_active = self.request.query_params.get("is_active", False)
         user_ids = self.request.query_params.get("user_ids", False)
 
-        if not self.request.user.is_staff:
-            queryset = queryset.filter(user=self.request.user)
+        if self.request.user.is_authenticated:
+            if not self.request.user.is_staff:
+                queryset = queryset.filter(user=self.request.user)
+        else:
+            return Borrowing.objects.none()
 
         if user_ids:
             user_ids = [int(str_id) for str_id in user_ids.split(",")]
