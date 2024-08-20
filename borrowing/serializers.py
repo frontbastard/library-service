@@ -7,10 +7,14 @@ from user.serializers import UserSerializer
 
 
 class BorrowingSerializer(serializers.ModelSerializer):
-    total_sum = serializers.SerializerMethodField()
+    regular_sum = serializers.SerializerMethodField()
+    fine_sum = serializers.SerializerMethodField()
 
-    def get_total_sum(self, obj):
-        return obj.total_sum
+    def get_regular_sum(self, obj):
+        return obj.regular_sum
+
+    def get_fine_sum(self, obj):
+        return obj.fine_sum
 
     def validate_books(self, books):
         if self.instance is None:
@@ -21,7 +25,12 @@ class BorrowingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Borrowing
         fields = "__all__"
-        read_only_fields = ("borrow_date", "actual_return_date", "total_sum")
+        read_only_fields = (
+            "borrow_date",
+            "actual_return_date",
+            "regular_sum",
+            "fine_sum"
+        )
 
 
 class BorrowingCreateSerializer(BorrowingSerializer):
@@ -82,6 +91,5 @@ class BorrowingReturnSerializer(BorrowingDetailSerializer):
             "actual_return_date",
             "user_email",
             "books",
-            "total_sum",
         )
         read_only_fields = ("books", "borrow_date", "expected_return_date")
