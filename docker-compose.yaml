@@ -62,7 +62,7 @@ services:
     command: [
       "listen",
       "--forward-to",
-      "http://app:8000/stripe/webhook/",
+      "http://host.docker.internal:8000/stripe/webhook/",
       "--api-key",
       "${STRIPE_SECRET_KEY}"
     ]
@@ -70,6 +70,8 @@ services:
       - .env
     depends_on:
       - app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   postgres_data:
