@@ -1,4 +1,6 @@
 from django.db import transaction
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -69,6 +71,24 @@ class BorrowingViewSet(viewsets.ModelViewSet):
             {"checkout_url": payment.session_url},
             status=status.HTTP_303_SEE_OTHER
         )
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "user_ids",
+                type={"type": "list", "items": {"type": "number"}},
+                description="Filter by user id (ex. ?user_ids=2,5)",
+            ),
+            OpenApiParameter(
+                "is_active",
+                type=OpenApiTypes.BOOL,
+                description="Filter by active status (ex. ?is_active=fiction)",
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        """Get list of all borrowings"""
+        return super().list(request, *args, **kwargs)
 
     @action(
         detail=True,

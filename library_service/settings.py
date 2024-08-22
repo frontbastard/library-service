@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "django_celery_beat",
     "payment",
+    "drf_spectacular",
     "user.apps.UserConfig",
     "book.apps.BookConfig",
     "borrowing.apps.BorrowingConfig",
@@ -181,7 +182,21 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_PAGINATION_CLASS":
         "rest_framework.pagination.LimitOffsetPagination",
-    "PAGE_SIZE": 5
+    "PAGE_SIZE": 5,
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Library Service API",
+    "DESCRIPTION": "Borrow books in the library",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "SWAGGER_UI_SETTINGS": {
+        "deepLinking": True,
+        "defaultModelRendering": "model",
+        "defaultModelsExpandDepth": 2,
+        "defaultModelExpandDepth": 2,
+    },
 }
 
 SIMPLE_JWT = {
