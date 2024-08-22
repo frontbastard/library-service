@@ -2,11 +2,8 @@ import stripe
 from django.db import transaction
 from django.urls import reverse
 
-from borrowing.serializers import (
-    BorrowingDetailSerializer,
-)
+from borrowing.models import Borrowing
 from library_service import settings
-from notification.tasks import send_borrowing_creation_notification
 from .models import Payment
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -14,7 +11,12 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 class PaymentService:
     @staticmethod
-    def create_checkout_session(request, borrowing):
+    def create_checkout_session(
+        request,
+        borrowing,
+        payment_type=Payment.TypeChoices.PAYMENT,
+        money_to_pay=Borrowing.regular_sum
+    ):
         with transaction.atomic():
             checkout_session = stripe.checkout.Session.create(
                 payment_method_types=["card"],
@@ -41,11 +43,11 @@ class PaymentService:
 
             payment = Payment.objects.create(
                 status=Payment.StatusChoices.PENDING,
-                type=Payment.TypeChoices.PAYMENT,
+                type=payment_type,
                 borrowing=borrowing,
                 session_url=checkout_session.url,
                 session_id=checkout_session.id,
-                money_to_pay=borrowing.regular_sum
+                money_to_pay=money_to_pay
             )
 
         return payment

@@ -12,6 +12,7 @@ from borrowing.serializers import (
     BorrowingReturnSerializer,
     BorrowingCreateSerializer,
 )
+from payment.models import Payment
 from payment.services import PaymentService
 
 
@@ -86,8 +87,29 @@ class BorrowingViewSet(viewsets.ModelViewSet):
 
         with transaction.atomic():
             borrowing.actual_return_date = request.data.get(
-                "actual_return_date", None
+                "actual_return_date"
             )
+
+            if borrowing.actual_return_date:
+                try:
+                    payment = PaymentService.create_checkout_session(
+                        request,
+                        borrowing,
+                        payment_type=Payment.TypeChoices.FINE,
+                        money_to_pay=borrowing.fine_sum
+                    )
+                except Exception as e:
+                    return Response(
+                        {"message": f"Failed to create payment: {str(e)}"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                return Response(
+                    {
+                        "checkout_url": payment.session_url
+                    }, status=status.HTTP_200_OK
+                )
+
             serializer.save()
 
             try:
@@ -95,7 +117,13 @@ class BorrowingViewSet(viewsets.ModelViewSet):
                     book.update_inventory(1)
             except Exception as e:
                 return Response(
-                    {"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST
+                    {"message": f"Failed to update inventory: {str(e)}"},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "message": "Borrowing returned successfully.",
+                "data": serializer.data,
+            }, status=status.HTTP_200_OK
+        )
