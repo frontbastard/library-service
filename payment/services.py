@@ -15,8 +15,11 @@ class PaymentService:
         request,
         borrowing,
         payment_type=Payment.TypeChoices.PAYMENT,
-        money_to_pay=Borrowing.regular_sum
+        money_to_pay=None
     ):
+        if money_to_pay is None:
+            money_to_pay = borrowing.regular_sum
+
         with transaction.atomic():
             checkout_session = stripe.checkout.Session.create(
                 payment_method_types=["card"],
@@ -31,10 +34,13 @@ class PaymentService:
                     "quantity": 1,
                 }],
                 mode="payment",
-                success_url=request.build_absolute_uri(
-                    reverse("payment:success")
-                ) + f"?session_id={{CHECKOUT_SESSION_ID}}&"
-                    f"borrowing_id={borrowing.id}",
+                success_url=(
+                    request.build_absolute_uri(reverse("payment:success"))
+                    + (
+                        f"?session_id={{CHECKOUT_SESSION_ID}}"
+                        f"&borrowing_id={borrowing.id}"
+                    )
+                ),
                 cancel_url=request.build_absolute_uri(
                     reverse("payment:cancel")
                 ) + f"?borrowing_id={borrowing.id}",

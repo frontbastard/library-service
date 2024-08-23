@@ -42,12 +42,14 @@ class PaymentCancelView(APIView):
                 try:
                     borrowing = Borrowing.objects.get(id=borrowing_id)
                     payment = Payment.objects.filter(
-                        borrowing=borrowing, status=Payment.StatusChoices.PENDING
+                        borrowing=borrowing,
+                        status=Payment.StatusChoices.PENDING
                     ).first()
                     if payment:
                         payment.status = Payment.StatusChoices.PAID
                     return Response(
-                        {"message": "Payment cancelled"}, status=status.HTTP_200_OK
+                        {"message": "Payment cancelled"},
+                        status=status.HTTP_200_OK
                     )
                 except Borrowing.DoesNotExist:
                     pass

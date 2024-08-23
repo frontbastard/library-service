@@ -36,11 +36,13 @@ def check_overdue_borrowings():
     for borrowing in overdue_borrowings:
         message += (
             f"User: {borrowing.user.get_full_name() or borrowing.user.email}\n"
-            f"Books: {', '.join(book.title for book in borrowing.books.all())}\n"
+            f"""Books: {", ".join(
+                book.title for book in borrowing.books.all()
+            )}"""
             f"Borrow date: {borrowing.borrow_date}\n"
             f"Expected return date: {borrowing.expected_return_date}\n"
             f"Days overdue: {(today - borrowing.expected_return_date).days}\n"
-            f"{'-' * 10}\n"
+            f"""{"-" * 10}\n"""
         )
 
     send_telegram_message_sync(message)
