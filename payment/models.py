@@ -17,7 +17,7 @@ class Payment(models.Model):
         choices=StatusChoices.choices,
         default=StatusChoices.PENDING
     )
-    type = models.CharField(
+    type = models.CharField(  # noqa: VNE003
         max_length=10,
         choices=TypeChoices.choices,
         default=TypeChoices.PAYMENT

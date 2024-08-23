@@ -29,7 +29,7 @@ urlpatterns = [
         include("borrowing.urls", namespace="borrowing")
     ),
     path("api/payments/", include("payment.urls", namespace="payment")),
-    path('api/schema/', SpectacularAPIView.as_view(), name="schema"),
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     # Optional UI:
     path(
         "api/schema/swagger-ui/",
@@ -38,6 +38,8 @@ urlpatterns = [
 ]
 
 if not settings.TESTING:
-    urlpatterns = [
-                      *urlpatterns,
-                  ] + debug_toolbar_urls()
+    urlpatterns = (
+        [
+            *urlpatterns,
+        ]
+        + debug_toolbar_urls())

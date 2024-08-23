@@ -11,7 +11,7 @@ class PaymentFactory(factory.django.DjangoModelFactory):
         model = Payment
 
     status = Payment.StatusChoices.PENDING
-    type = Payment.TypeChoices.PAYMENT
+    type = Payment.TypeChoices.PAYMENT  # noqa: VNE003
     borrowing = factory.SubFactory(BorrowingFactory)
     session_url = factory.Faker("url")
     session_id = factory.Faker("uuid4")
